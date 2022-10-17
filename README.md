@@ -27,7 +27,7 @@ Then, in this folder, create a file named `protocol.md` and write your **specifi
   * Extensibility
 * Examples: examples of some typical dialogs.
   
-## Phase 2: review 3 specifications (in pairs, 5 minutes)
+## Phase 2: review 2 specifications (in pairs, 5 minutes)
 
 - Are there big differences between the specification?
 - What are the common elements?
