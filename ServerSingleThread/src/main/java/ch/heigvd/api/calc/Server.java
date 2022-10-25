@@ -27,11 +27,17 @@ public class Server {
      * Start the server on a listening socket.
      */
     private void start() {
-        /* TODO: implement the receptionist server here.
-         *  The receptionist just creates a server socket and accepts new client connections.
-         *  For a new client connection, the actual work is done by the handleClient method below.
-         */
-
+        Socket clientSocket  = null;
+        ServerSocket serverSocket = null;
+        try {
+            serverSocket = new ServerSocket(8876);
+            clientSocket = serverSocket.accept();
+            handleClient(clientSocket);
+            serverSocket.close();
+        }
+        catch (IOException ex){
+            LOG.log(Level.SEVERE, ex.toString(), ex);
+        }
     }
 
     /**
@@ -40,16 +46,76 @@ public class Server {
      * @param clientSocket with the connection with the individual client.
      */
     private void handleClient(Socket clientSocket) {
+        BufferedReader in = null;
+        PrintWriter out = null;
 
-        /* TODO: implement the handling of a client connection according to the specification.
-         *   The server has to do the following:
-         *   - initialize the dialog according to the specification (for example send the list
-         *     of possible commands)
-         *   - In a loop:
-         *     - Read a message from the input stream (using BufferedReader.readLine)
-         *     - Handle the message
-         *     - Send to result to the client
-         */
+        try{
+            in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            out = new PrintWriter(clientSocket.getOutputStream());
+            out.println("HELLO");
+            out.println("LIST OF COMMANDS:");
+            out.println("- ADD 2");
+            out.println("- SUB 2");
+            out.println("END");
+            out.flush();
 
+            while(true) {
+                out.println("ENTER YOUR COMMAND");
+                out.flush();
+                String line = in.readLine();
+                if(line.equals("exit"))
+                    break;
+
+                String[] splitted = line.split(" ");
+                if(splitted.length != 3) {
+                    out.println("ERROR WITH ARGS");
+                    out.flush();
+                    continue;
+                }
+
+                String action = splitted[0];
+                double val1, val2, res;
+
+                try{
+                    val1 = Double.parseDouble(splitted[1]);
+                    val2 = Double.parseDouble(splitted[2]);
+                }
+                catch (NumberFormatException e){
+                    out.println("NOT A DOUBLE");
+                    out.flush();
+                    continue;
+                }
+
+                switch (action){
+                    case "ADD":
+                        res = val1 + val2;
+                        out.println(res);
+                        out.flush();
+                        break;
+                    case "SUB":
+                        res = val1 - val2;
+                        out.println(res);
+                        out.flush();
+                        break;
+                    default:
+                        out.println("UNKNOWN COMMAND");
+                        out.flush();
+                }
+            }
+        } catch (IOException ex) {
+            LOG.log(Level.SEVERE, ex.toString(), ex);
+        } finally {
+            if(out != null) out.close();
+            try {
+                if (in != null) in.close();
+            } catch (IOException ex) {
+                LOG.log(Level.SEVERE, ex.toString(), ex);
+            }
+            try {
+                if (clientSocket != null && ! clientSocket.isClosed()) clientSocket.close();
+            } catch (IOException ex) {
+                LOG.log(Level.SEVERE, ex.toString(), ex);
+            }
+        }
     }
 }

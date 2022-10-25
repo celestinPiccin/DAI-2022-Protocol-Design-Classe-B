@@ -1,7 +1,7 @@
 package ch.heigvd.api.calc;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -21,19 +21,61 @@ public class Client {
         // Log output on a single line
         System.setProperty("java.util.logging.SimpleFormatter.format", "%4$s: %5$s%6$s%n");
 
+        String serverAddress = "127.0.0.1";
+        int serverPort = 8876;
+
+        PrintWriter out = null;
+        BufferedReader in = null;
         BufferedReader stdin = null;
+        String message, cmd, result, input;
+        Socket socket = null;
 
-        /* TODO: Implement the client here, according to your specification
-         *   The client has to do the following:
-         *   - connect to the server
-         *   - initialize the dialog with the server according to your specification
-         *   - In a loop:
-         *     - read the command from the user on stdin (already created)
-         *     - send the command to the server
-         *     - read the response line from the server (using BufferedReader.readLine)
-         */
+        try {
+            socket = new Socket(serverAddress, serverPort);
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            out = new PrintWriter(socket.getOutputStream());
+            stdin = new BufferedReader(new InputStreamReader(System.in));
 
-        stdin = new BufferedReader(new InputStreamReader(System.in));
+            while (!(message = in.readLine()).equals("END")){
+                System.out.println(message);
+            }
 
+            while(true){
+
+                cmd = in.readLine();
+                System.out.println(cmd);
+
+                input = stdin.readLine();
+
+                out.println(input);
+                out.flush();
+                if(input.equals("exit")){
+                    break;
+                }
+
+                result = in.readLine();
+                System.out.println(result);
+            }
+
+        } catch (IOException ex) {
+            LOG.log(Level.SEVERE, ex.toString(), ex);
+        } finally {
+            if(out != null) out.close();
+            try {
+                if (in != null) in.close();
+            } catch (IOException ex) {
+                LOG.log(Level.SEVERE, ex.toString(), ex);
+            }
+            try {
+                if (stdin != null) stdin.close();
+            } catch (IOException ex) {
+                LOG.log(Level.SEVERE, ex.toString(), ex);
+            }
+            try {
+                if (socket != null && ! socket.isClosed()) socket.close();
+            } catch (IOException ex) {
+                LOG.log(Level.SEVERE, ex.toString(), ex);
+            }
+        }
     }
 }
