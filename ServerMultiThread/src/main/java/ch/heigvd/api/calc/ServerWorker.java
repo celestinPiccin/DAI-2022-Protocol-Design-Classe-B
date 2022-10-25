@@ -13,6 +13,10 @@ public class ServerWorker implements Runnable {
 
     private final static Logger LOG = Logger.getLogger(ServerWorker.class.getName());
 
+    private PrintWriter out = null;
+    private BufferedReader in = null;
+    private Socket clientSocket = null;
+
     /**
      * Instantiation of a new worker mapped to a socket
      *
@@ -22,10 +26,13 @@ public class ServerWorker implements Runnable {
         // Log output on a single line
         System.setProperty("java.util.logging.SimpleFormatter.format", "%4$s: %5$s%6$s%n");
 
-        /* TODO: prepare everything for the ServerWorker to run when the
-         *   server calls the ServerWorker.run method.
-         *   Don't call the ServerWorker.run method here. It has to be called from the Server.
-         */
+        try {
+            this.clientSocket = clientSocket;
+            out = new PrintWriter(new OutputStreamWriter(clientSocket.getOutputStream(), StandardCharsets.UTF_8));
+            in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), StandardCharsets.UTF_8));
+        }catch (IOException ex){
+            LOG.log(Level.SEVERE, ex.toString(), ex);
+        }
 
     }
 
@@ -34,16 +41,72 @@ public class ServerWorker implements Runnable {
      */
     @Override
     public void run() {
+        try{
+            out.println("HELLO");
+            out.println("LIST OF COMMANDS:");
+            out.println("- ADD 2");
+            out.println("- SUB 2");
+            out.println("END");
+            out.flush();
 
-        /* TODO: implement the handling of a client connection according to the specification.
-         *   The server has to do the following:
-         *   - initialize the dialog according to the specification (for example send the list
-         *     of possible commands)
-         *   - In a loop:
-         *     - Read a message from the input stream (using BufferedReader.readLine)
-         *     - Handle the message
-         *     - Send to result to the client
-         */
+            while(true) {
+                out.println("ENTER YOUR COMMAND");
+                out.flush();
+                String line = in.readLine();
+                if(line.equals("exit"))
+                    break;
+
+                String[] splitted = line.split(" ");
+                if(splitted.length != 3) {
+                    out.println("ERROR WITH ARGS");
+                    out.flush();
+                    continue;
+                }
+
+                String action = splitted[0];
+                double val1, val2, res;
+
+                try{
+                    val1 = Double.parseDouble(splitted[1]);
+                    val2 = Double.parseDouble(splitted[2]);
+                }
+                catch (NumberFormatException e){
+                    out.println("NOT A DOUBLE");
+                    out.flush();
+                    continue;
+                }
+
+                switch (action){
+                    case "ADD":
+                        res = val1 + val2;
+                        out.println(res);
+                        out.flush();
+                        break;
+                    case "SUB":
+                        res = val1 - val2;
+                        out.println(res);
+                        out.flush();
+                        break;
+                    default:
+                        out.println("UNKNOWN COMMAND");
+                        out.flush();
+                }
+            }
+        } catch (IOException ex) {
+            LOG.log(Level.SEVERE, ex.toString(), ex);
+        } finally {
+            if(out != null) out.close();
+            try {
+                if (in != null) in.close();
+            } catch (IOException ex) {
+                LOG.log(Level.SEVERE, ex.toString(), ex);
+            }
+            try {
+                if (clientSocket != null && ! clientSocket.isClosed()) clientSocket.close();
+            } catch (IOException ex) {
+                LOG.log(Level.SEVERE, ex.toString(), ex);
+            }
+        }
 
     }
 }

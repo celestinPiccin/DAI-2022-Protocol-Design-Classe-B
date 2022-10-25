@@ -28,11 +28,27 @@ public class Server {
      */
     private void start() {
 
-        /* TODO: implement the receptionist server here.
-         *  The receptionist just creates a server socket and accepts new client connections.
-         *  For a new client connection, the actual work is done in a new thread
-         *  by a new ServerWorker.
-         */
+        ServerSocket socket = null;
+
+        try{
+            socket = new ServerSocket(8167);
+        }
+        catch (IOException ex) {
+            LOG.log(Level.SEVERE, ex.toString(), ex);
+            return;
+        }
+
+        Socket clientSocket = null;
+        try {
+            while (true){
+                clientSocket = socket.accept();
+                ServerWorker worker = new ServerWorker(clientSocket);
+                new Thread(worker).start();
+            }
+        }
+        catch (IOException ex){
+            LOG.log(Level.SEVERE, ex.toString(), ex);
+        }
 
     }
 }

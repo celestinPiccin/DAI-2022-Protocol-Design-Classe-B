@@ -2,6 +2,7 @@ package ch.heigvd.api.calc;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -22,7 +23,7 @@ public class Client {
         System.setProperty("java.util.logging.SimpleFormatter.format", "%4$s: %5$s%6$s%n");
 
         String serverAddress = "127.0.0.1";
-        int serverPort = 8876;
+        int serverPort = 8167;
 
         PrintWriter out = null;
         BufferedReader in = null;
@@ -32,8 +33,8 @@ public class Client {
 
         try {
             socket = new Socket(serverAddress, serverPort);
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            out = new PrintWriter(socket.getOutputStream());
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+            out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8));
             stdin = new BufferedReader(new InputStreamReader(System.in));
 
             while (!(message = in.readLine()).equals("END")){
